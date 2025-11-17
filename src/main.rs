@@ -5,6 +5,7 @@ mod commands;
 mod file;
 mod input;
 mod models;
+mod search;
 mod storage;
 mod ui;
 
@@ -14,7 +15,10 @@ use cli::{Cli, Commands};
 use crate::{
     clipboard_provider::SmartClipboard,
     command_runner::ShellCommandRunner,
-    commands::{copy, delete, edit, export, import, list, restore, run, save, show},
+    commands::{
+        copy, delete, edit, export, import, list, restore, run, save,
+        search as search_cmd, show,
+    },
     file::{editor::Editor, reader::Reader, writer::Writer},
     input::cli_save::CliSaveInput,
     storage::file_storage::FileStorage,
@@ -35,9 +39,13 @@ fn main() {
             let runner = ShellCommandRunner;
             run::run_command(&storage, &selection_ui, &runner, name);
         }
-        Commands::List { tag } => {
+        Commands::List { tag, search } => {
             let mut cli_table = CliTable::new();
-            list::list_command(&storage, &mut cli_table, tag);
+            list::list_command(&storage, &mut cli_table, tag, search);
+        }
+        Commands::Search { query } => {
+            let mut cli_table = CliTable::new();
+            search_cmd::search_command(&storage, &mut cli_table, query);
         }
         Commands::Show { name } => {
             let selection_ui = CliSelection::new();

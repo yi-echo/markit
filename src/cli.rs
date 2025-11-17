@@ -14,10 +14,18 @@ pub enum Commands {
     #[command(about = "Save a new snippet interactively")]
     Save { name: String },
 
-    #[command(about = "List all saved snippets (optionally filter by tag)")]
+    #[command(about = "List all saved snippets (optionally filter by tag or search)")]
     List {
         #[arg(short, long, help = "Filter by tag")]
         tag: Option<String>,
+
+        #[arg(short, long, help = "Fuzzy search in name, description, content, and tags")]
+        search: Option<String>,
+    },
+
+    #[command(about = "Fuzzy search snippets by name, description, content, or tags")]
+    Search {
+        query: String,
     },
 
     #[command(about = "Show the full content of a snippet")]

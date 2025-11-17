@@ -7,7 +7,12 @@ use crate::{
     ui::TableUI,
 };
 
-pub fn list_command(storage: &dyn Storage, table_ui: &mut dyn TableUI, tag: Option<String>) {
+pub fn list_command(
+    storage: &dyn Storage,
+    table_ui: &mut dyn TableUI,
+    tag: Option<String>,
+    search: Option<String>,
+) {
     let store = match storage.load() {
         Ok(s) => s,
         Err(_) => {
@@ -16,14 +21,21 @@ pub fn list_command(storage: &dyn Storage, table_ui: &mut dyn TableUI, tag: Opti
         }
     };
 
-    let snippets: Vec<Snippet> = match tag.as_deref() {
-        Some(tag) => apply_filter(&store, Filter::Tag(tag.to_string())),
-        None => apply_filter(&store, Filter::All),
+    let snippets: Vec<Snippet> = match (tag.as_deref(), search.as_deref()) {
+        (Some(tag), None) => apply_filter(&store, Filter::Tag(tag.to_string())),
+        (None, Some(query)) => apply_filter(&store, Filter::FuzzySearch(query.to_string())),
+        (Some(_), Some(query)) => {
+            eprintln!("⚠️ Cannot use both --tag and --search. Using --search.");
+            apply_filter(&store, Filter::FuzzySearch(query.to_string()))
+        }
+        (None, None) => apply_filter(&store, Filter::All),
     };
 
     if snippets.is_empty() {
         if let Some(tag) = tag {
             println!("📭 No snippets found for tag: {}.", tag);
+        } else if let Some(query) = search.as_deref() {
+            println!("📭 No snippets found matching: {}.", query);
         } else {
             println!("📭 No snippets saved yet.");
         }
@@ -92,7 +104,7 @@ mod tests {
             printed_table: Rc::new(RefCell::new(false)),
         };
 
-        list_command(&storage, &mut table_ui, None);
+        list_command(&storage, &mut table_ui, None, None);
         assert!(!*table_ui.printed_table.borrow());
     }
 
@@ -116,7 +128,7 @@ mod tests {
             printed_table: Rc::new(RefCell::new(false)),
         };
 
-        list_command(&storage, &mut table_ui, Some("nonexistent".to_string()));
+        list_command(&storage, &mut table_ui, Some("nonexistent".to_string()), None);
         assert!(!*table_ui.printed_table.borrow());
     }
 
@@ -140,7 +152,7 @@ mod tests {
             printed_table: Rc::new(RefCell::new(false)),
         };
 
-        list_command(&storage, &mut table_ui, None);
+        list_command(&storage, &mut table_ui, None, None);
         assert!(*table_ui.printed_table.borrow());
     }
 }

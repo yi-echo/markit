@@ -4,6 +4,7 @@ pub enum Filter {
     All,
     Name(String),
     Tag(String),
+    FuzzySearch(String),
 }
 
 pub fn apply_filter(store: &SnippetStore, filter: Filter) -> Vec<Snippet> {
@@ -11,6 +12,16 @@ pub fn apply_filter(store: &SnippetStore, filter: Filter) -> Vec<Snippet> {
         Filter::All => store.snippets.clone(),
         Filter::Name(name) => get_by_name(store, &name),
         Filter::Tag(tag) => get_by_tag(store, &tag),
+        Filter::FuzzySearch(query) => {
+            use crate::search::fuzzy::FuzzySearcher;
+            use crate::search::Searcher;
+            let searcher = FuzzySearcher::new();
+            searcher
+                .search(&query, &store.snippets)
+                .into_iter()
+                .map(|scored| scored.snippet)
+                .collect()
+        }
     }
 }
 

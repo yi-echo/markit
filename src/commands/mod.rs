@@ -8,4 +8,5 @@ pub mod list;
 pub mod restore;
 pub mod run;
 pub mod save;
+pub mod search;
 pub mod show;
